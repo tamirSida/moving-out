@@ -34,7 +34,7 @@ export default function PageLoader({ children }: PageLoaderProps) {
         }`}
       >
         <div className="text-center">
-          <div className="relative w-64 h-64 sm:w-80 sm:h-80 mb-8">
+          <div className="relative w-80 h-80 sm:w-96 sm:h-96 lg:w-[500px] lg:h-[500px] mb-8">
             <Image
               src="/pic.jpg"
               alt="Loading"
@@ -84,7 +84,7 @@ export default function PageLoader({ children }: PageLoaderProps) {
           <div className="relative max-w-4xl max-h-[90vh] w-full">
             <button
               onClick={() => setShowPreview(false)}
-              className="absolute top-4 right-4 z-10 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm"
+              className="absolute top-4 right-4 z-10 bg-black bg-opacity-50 hover:bg-opacity-70 text-white p-3 rounded-full transition-all duration-200 shadow-lg border-2 border-white border-opacity-30"
               title="סגור"
             >
               <FontAwesomeIcon icon={faTimes} className="w-5 h-5" />
