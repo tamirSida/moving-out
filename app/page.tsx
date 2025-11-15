@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, onSnapshot, addDoc, updateDoc, doc, setDoc } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, updateDoc, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Item, Person, PurchaseData, AppSettings } from '@/types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -106,6 +106,10 @@ export default function Home() {
     }
   };
 
+  const handleDeleteItem = async (item: Item) => {
+    await deleteDoc(doc(db, 'items', item.id));
+  };
+
   const filteredItems = items.filter(item => {
     if (currentView === 'active') return item.status === 'pending';
     return true;
@@ -188,6 +192,7 @@ export default function Home() {
                 setSelectedItem(item);
                 setShowPurchaseDialog(true);
               }}
+              onDelete={handleDeleteItem}
             />
 
             {/* Add Item Button */}

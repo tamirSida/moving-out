@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Item, Person, PurchaseData } from '@/types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes, faCheck, faUser, faShekelSign, faReceipt, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faTimes, faCheck, faUser, faShekelSign, faReceipt, faSpinner, faUpload, faImage } from '@fortawesome/free-solid-svg-icons';
 
 interface PurchaseDialogProps {
   item: Item;
@@ -140,42 +140,89 @@ export default function PurchaseDialog({ item, people, onSubmit, onClose }: Purc
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-3">
               <FontAwesomeIcon icon={faReceipt} className="w-4 h-4 ml-1" />
               העלאת קבלה (אופציונלי)
             </label>
-            <input
-              type="file"
-              onChange={handleFileChange}
-              accept="image/*,.pdf"
-              disabled={uploadingReceipt}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent file:ml-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed"
-            />
             
-            {uploadingReceipt && (
-              <div className="flex items-center gap-2 text-sm text-blue-600 mt-2">
-                <FontAwesomeIcon icon={faSpinner} className="w-4 h-4 animate-spin" />
-                <span>מעלה קבלה...</span>
-              </div>
-            )}
+            {/* Custom Upload Button */}
+            <div className="relative">
+              <input
+                type="file"
+                onChange={handleFileChange}
+                accept="image/*,.pdf"
+                disabled={uploadingReceipt}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                id="receipt-upload"
+              />
+              <label
+                htmlFor="receipt-upload"
+                className={`
+                  flex items-center justify-center gap-3 w-full py-4 px-4 
+                  border-2 border-dashed rounded-lg transition-all duration-200
+                  ${uploadingReceipt 
+                    ? 'bg-gray-50 border-gray-200 cursor-not-allowed' 
+                    : uploadedReceiptUrl
+                      ? 'bg-green-50 border-green-300 hover:bg-green-100'
+                      : 'bg-blue-50 border-blue-300 hover:bg-blue-100 cursor-pointer'
+                  }
+                `}
+              >
+                {uploadingReceipt ? (
+                  <>
+                    <FontAwesomeIcon icon={faSpinner} className="w-5 h-5 text-blue-500 animate-spin" />
+                    <span className="text-blue-700 font-medium">מעלה קבלה...</span>
+                  </>
+                ) : uploadedReceiptUrl ? (
+                  <>
+                    <FontAwesomeIcon icon={faCheck} className="w-5 h-5 text-green-600" />
+                    <span className="text-green-700 font-medium">קבלה הועלתה בהצלחה</span>
+                    <FontAwesomeIcon icon={faUpload} className="w-4 h-4 text-green-500" />
+                  </>
+                ) : (
+                  <>
+                    <FontAwesomeIcon icon={faUpload} className="w-5 h-5 text-blue-500" />
+                    <div className="text-center">
+                      <span className="text-blue-700 font-medium block">העלה קבלה</span>
+                      <span className="text-blue-600 text-sm">תמונה או PDF</span>
+                    </div>
+                    <FontAwesomeIcon icon={faImage} className="w-4 h-4 text-blue-400" />
+                  </>
+                )}
+              </label>
+            </div>
             
             {uploadedReceiptUrl && !uploadingReceipt && (
-              <div className="mt-2">
-                <p className="text-sm text-green-600 mb-2">
-                  ✓ קבלה הועלתה בהצלחה
-                </p>
+              <div className="mt-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-green-800">תצוגה מקדימה:</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUploadedReceiptUrl(null);
+                      setFormData({ ...formData, receiptFile: null });
+                    }}
+                    className="text-red-500 hover:text-red-700 transition-colors"
+                    title="הסר קבלה"
+                  >
+                    <FontAwesomeIcon icon={faTimes} className="w-4 h-4" />
+                  </button>
+                </div>
                 <img 
                   src={uploadedReceiptUrl} 
                   alt="Receipt preview" 
-                  className="max-w-full h-32 object-cover rounded-lg border"
+                  className="max-w-full h-32 object-cover rounded-lg border border-green-300"
                 />
               </div>
             )}
             
             {formData.receiptFile && !uploadedReceiptUrl && !uploadingReceipt && (
-              <p className="text-sm text-orange-600 mt-1">
-                נבחר קובץ: {formData.receiptFile.name} (לא הועלה עדיין)
-              </p>
+              <div className="mt-2 p-2 bg-orange-50 rounded-lg border border-orange-200">
+                <p className="text-sm text-orange-700">
+                  <FontAwesomeIcon icon={faSpinner} className="w-3 h-3 ml-1" />
+                  נבחר: {formData.receiptFile.name}
+                </p>
+              </div>
             )}
           </div>
 

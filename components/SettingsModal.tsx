@@ -67,12 +67,11 @@ export default function SettingsModal({ people, settings, onClose, onUpdateSetti
           )}
           
           {activeTab === 'people' && (
-            <div className="-m-6">
-              <PeopleManagement 
-                people={people} 
-                onClose={() => {}} 
-              />
-            </div>
+            <PeopleManagement 
+              people={people} 
+              onClose={() => {}}
+              isModal={false}
+            />
           )}
         </div>
       </div>

@@ -2,17 +2,28 @@
 
 import { Item, Person } from '@/types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faShoppingCart, faCheck, faUser, faTag, faShekelSign, faReceipt, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
+import { faShoppingCart, faCheck, faUser, faTag, faShekelSign, faReceipt, faExternalLinkAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 interface ItemListProps {
   items: Item[];
   people: Person[];
   onPurchase: (item: Item) => void;
+  onDelete: (item: Item) => void;
 }
 
-export default function ItemList({ items, people, onPurchase }: ItemListProps) {
+export default function ItemList({ items, people, onPurchase, onDelete }: ItemListProps) {
   const getPersonName = (personId: string) => {
     return people.find(p => p.id === personId)?.name || 'לא ידוע';
+  };
+
+  const handleDelete = (item: Item) => {
+    const message = item.status === 'bought' 
+      ? `האם אתה בטוח שברצונך למחוק את "${item.name}"? הפריט יוסר מהרשימה ומהתקציב`
+      : `האם אתה בטוח שברצונך למחוק את "${item.name}"?`;
+    
+    if (confirm(message)) {
+      onDelete(item);
+    }
   };
 
   if (items.length === 0) {
@@ -85,15 +96,25 @@ export default function ItemList({ items, people, onPurchase }: ItemListProps) {
               </div>
             </div>
 
-            {item.status === 'pending' && (
+            <div className="flex gap-2">
+              {item.status === 'pending' && (
+                <button
+                  onClick={() => onPurchase(item)}
+                  className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                >
+                  <FontAwesomeIcon icon={faShoppingCart} className="w-4 h-4 ml-1" />
+                  נקנה
+                </button>
+              )}
+              
               <button
-                onClick={() => onPurchase(item)}
-                className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                onClick={() => handleDelete(item)}
+                className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                title="מחק פריט"
               >
-                <FontAwesomeIcon icon={faShoppingCart} className="w-4 h-4 ml-1" />
-                נקנה
+                <FontAwesomeIcon icon={faTrash} className="w-4 h-4" />
               </button>
-            )}
+            </div>
           </div>
         </div>
       ))}

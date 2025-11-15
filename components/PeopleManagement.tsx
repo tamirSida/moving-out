@@ -10,9 +10,10 @@ import { faPlus, faEdit, faTrash, faUser, faUserCheck, faTimes, faCheck } from '
 interface PeopleManagementProps {
   people: Person[];
   onClose: () => void;
+  isModal?: boolean;
 }
 
-export default function PeopleManagement({ people, onClose }: PeopleManagementProps) {
+export default function PeopleManagement({ people, onClose, isModal = true }: PeopleManagementProps) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingPerson, setEditingPerson] = useState<Person | null>(null);
   const [formData, setFormData] = useState({ name: '', isPayer: true });
@@ -61,21 +62,23 @@ export default function PeopleManagement({ people, onClose }: PeopleManagementPr
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-      <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl max-h-[85vh] overflow-hidden">
-        <div className="p-6 border-b border-gray-100">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">ניהול אנשים</h2>
-            <button
-              onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all duration-200"
-            >
-              <FontAwesomeIcon icon={faTimes} className="w-5 h-5" />
-            </button>
+    <div className={isModal ? "fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" : ""}>
+      <div className={isModal ? "bg-white w-full max-w-lg rounded-2xl shadow-2xl max-h-[85vh] overflow-hidden" : "w-full"}>
+        {isModal && (
+          <div className="p-6 border-b border-gray-100">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-gray-900">ניהול אנשים</h2>
+              <button
+                onClick={onClose}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all duration-200"
+              >
+                <FontAwesomeIcon icon={faTimes} className="w-5 h-5" />
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
-        <div className="p-6 overflow-y-auto max-h-[calc(85vh-140px)]">
+        <div className={isModal ? "p-6 overflow-y-auto max-h-[calc(85vh-140px)]" : "w-full"}>
 
           {/* Add/Edit Form */}
           {(showAddForm || editingPerson) && (
