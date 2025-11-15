@@ -12,6 +12,7 @@ import PurchaseDialog from '@/components/PurchaseDialog';
 import BreakdownView from '@/components/BreakdownView';
 import SettingsModal from '@/components/SettingsModal';
 import LoadingWrapper from '@/components/LoadingWrapper';
+import BudgetTracker from '@/components/BudgetTracker';
 
 export default function Home() {
   const [items, setItems] = useState<Item[]>([]);
@@ -177,6 +178,9 @@ export default function Home() {
       <main className="max-w-md mx-auto px-4 py-4">
         {currentView !== 'breakdown' && (
           <>
+            {currentView === 'active' && (
+              <BudgetTracker items={items} settings={settings} />
+            )}
             <ItemList
               items={filteredItems}
               people={people}
