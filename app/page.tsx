@@ -15,6 +15,7 @@ import SettingsModal from '@/components/SettingsModal';
 import LoadingWrapper from '@/components/LoadingWrapper';
 import BudgetTracker from '@/components/BudgetTracker';
 import PageLoader from '@/components/PageLoader';
+import SearchAndFilter from '@/components/SearchAndFilter';
 
 export default function Home() {
   const [items, setItems] = useState<Item[]>([]);
@@ -26,6 +27,7 @@ export default function Home() {
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [showPurchaseDialog, setShowPurchaseDialog] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [filteredItems, setFilteredItems] = useState<Item[]>([]);
 
   useEffect(() => {
     const unsubscribeItems = onSnapshot(collection(db, 'items'), (snapshot) => {
@@ -130,10 +132,21 @@ export default function Home() {
     setShowEditForm(true);
   };
 
-  const filteredItems = items.filter(item => {
+  const viewFilteredItems = items.filter(item => {
     if (currentView === 'active') return item.status === 'pending';
     return true;
   });
+
+  const finalFilteredItems = filteredItems.length > 0 ? filteredItems : viewFilteredItems;
+
+  const handleFilteredItems = (filtered: Item[]) => {
+    setFilteredItems(filtered);
+  };
+
+  // Reset search when changing views
+  useEffect(() => {
+    setFilteredItems([]);
+  }, [currentView]);
 
   return (
     <PageLoader>
@@ -206,8 +219,15 @@ export default function Home() {
             {currentView === 'active' && (
               <BudgetTracker items={items} settings={settings} />
             )}
+            
+            <SearchAndFilter 
+              items={viewFilteredItems}
+              onFilteredItems={handleFilteredItems}
+              settings={settings}
+            />
+            
             <ItemList
-              items={filteredItems}
+              items={finalFilteredItems}
               people={people}
               onPurchase={(item) => {
                 setSelectedItem(item);

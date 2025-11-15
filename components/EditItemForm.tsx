@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Item, AppSettings } from '@/types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes, faCheck, faTag, faShekelSign } from '@fortawesome/free-solid-svg-icons';
+import { faTimes, faCheck, faTag, faShekelSign, faUndo, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
 interface EditItemFormProps {
   item: Item;
@@ -56,6 +56,23 @@ export default function EditItemForm({ item, onSubmit, onClose, settings }: Edit
     }
 
     onSubmit(updateData);
+  };
+
+  const handleMarkAsNeeded = () => {
+    const confirmMessage = `האם אתה בטוח שברצונך לסמן את "${item.name}" כצריך קנייה?\n\nפעולה זו תמחק:\n• מחיר בפועל: ${item.actualPrice || 0} ₪\n• פרטי קונה\n• קישור לקבלה\n\nהפריט יחזור לרשימת הפעילים.`;
+    
+    if (confirm(confirmMessage)) {
+      onSubmit({
+        name: formData.name.trim(),
+        category: formData.category,
+        estimatedPrice: formData.estimatedPrice ? Number(formData.estimatedPrice) : undefined,
+        status: 'pending',
+        // Explicitly remove bought item fields
+        actualPrice: undefined,
+        boughtBy: undefined,
+        receiptUrl: undefined,
+      });
+    }
   };
 
   return (
@@ -144,6 +161,25 @@ export default function EditItemForm({ item, onSubmit, onClose, settings }: Edit
 
             {formData.status === 'bought' && (
               <>
+                {/* Mark as Needed Button */}
+                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <FontAwesomeIcon icon={faExclamationTriangle} className="w-4 h-4 text-yellow-600" />
+                    <span className="text-sm font-medium text-yellow-800">סימון בטעות כנקנה?</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleMarkAsNeeded}
+                    className="w-full py-2 px-4 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-medium transition-colors"
+                  >
+                    <FontAwesomeIcon icon={faUndo} className="w-4 h-4 ml-1" />
+                    החזר לרשימת הקניות
+                  </button>
+                  <p className="text-xs text-yellow-700 mt-2">
+                    פעולה זו תמחק את כל פרטי הקנייה ותחזיר את הפריט לרשימת הפעילים
+                  </p>
+                </div>
+
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-3">
                     <FontAwesomeIcon icon={faShekelSign} className="w-4 h-4 ml-1" />
