@@ -2,16 +2,17 @@
 
 import { Item, Person } from '@/types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faShoppingCart, faCheck, faUser, faTag, faShekelSign, faReceipt, faExternalLinkAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faShoppingCart, faCheck, faUser, faTag, faShekelSign, faReceipt, faExternalLinkAlt, faTrash, faEdit } from '@fortawesome/free-solid-svg-icons';
 
 interface ItemListProps {
   items: Item[];
   people: Person[];
   onPurchase: (item: Item) => void;
   onDelete: (item: Item) => void;
+  onEdit: (item: Item) => void;
 }
 
-export default function ItemList({ items, people, onPurchase, onDelete }: ItemListProps) {
+export default function ItemList({ items, people, onPurchase, onDelete, onEdit }: ItemListProps) {
   const getPersonName = (personId: string) => {
     return people.find(p => p.id === personId)?.name || 'לא ידוע';
   };
@@ -106,6 +107,14 @@ export default function ItemList({ items, people, onPurchase, onDelete }: ItemLi
                   נקנה
                 </button>
               )}
+              
+              <button
+                onClick={() => onEdit(item)}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                title="ערוך פריט"
+              >
+                <FontAwesomeIcon icon={faEdit} className="w-4 h-4" />
+              </button>
               
               <button
                 onClick={() => handleDelete(item)}

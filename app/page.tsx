@@ -8,6 +8,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faShoppingCart, faCheck, faReceipt, faUser, faList, faChartBar, faCog } from '@fortawesome/free-solid-svg-icons';
 import ItemList from '@/components/ItemList';
 import AddItemForm from '@/components/AddItemForm';
+import EditItemForm from '@/components/EditItemForm';
 import PurchaseDialog from '@/components/PurchaseDialog';
 import BreakdownView from '@/components/BreakdownView';
 import SettingsModal from '@/components/SettingsModal';
@@ -20,6 +21,7 @@ export default function Home() {
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [currentView, setCurrentView] = useState<'active' | 'all' | 'breakdown'>('active');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [showPurchaseDialog, setShowPurchaseDialog] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -110,6 +112,23 @@ export default function Home() {
     await deleteDoc(doc(db, 'items', item.id));
   };
 
+  const handleEditItem = async (itemData: Omit<Item, 'id' | 'createdAt' | 'updatedAt'>) => {
+    if (!selectedItem) return;
+
+    await updateDoc(doc(db, 'items', selectedItem.id), {
+      ...itemData,
+      updatedAt: new Date(),
+    });
+
+    setShowEditForm(false);
+    setSelectedItem(null);
+  };
+
+  const handleEditClick = (item: Item) => {
+    setSelectedItem(item);
+    setShowEditForm(true);
+  };
+
   const filteredItems = items.filter(item => {
     if (currentView === 'active') return item.status === 'pending';
     return true;
@@ -193,6 +212,7 @@ export default function Home() {
                 setShowPurchaseDialog(true);
               }}
               onDelete={handleDeleteItem}
+              onEdit={handleEditClick}
             />
 
             {/* Add Item Button */}
@@ -216,6 +236,18 @@ export default function Home() {
         <AddItemForm
           onSubmit={handleAddItem}
           onClose={() => setShowAddForm(false)}
+          settings={settings}
+        />
+      )}
+
+      {showEditForm && selectedItem && (
+        <EditItemForm
+          item={selectedItem}
+          onSubmit={handleEditItem}
+          onClose={() => {
+            setShowEditForm(false);
+            setSelectedItem(null);
+          }}
           settings={settings}
         />
       )}
