@@ -22,3 +22,11 @@ export interface PurchaseData {
   actualPrice: number;
   receiptUrl?: string;
 }
+
+export interface AppSettings {
+  id: string;
+  budget?: number;
+  categories: string[];
+  createdAt: Date;
+  updatedAt: Date;
+}

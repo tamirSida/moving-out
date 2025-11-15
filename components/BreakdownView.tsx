@@ -1,12 +1,13 @@
 'use client';
 
-import { Item, Person } from '@/types';
+import { Item, Person, AppSettings } from '@/types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faShekelSign, faUser, faChartBar, faUsers } from '@fortawesome/free-solid-svg-icons';
 
 interface BreakdownViewProps {
   items: Item[];
   people: Person[];
+  settings?: AppSettings | null;
 }
 
 interface PersonSpending {
@@ -16,9 +17,20 @@ interface PersonSpending {
   items: Item[];
 }
 
-export default function BreakdownView({ items, people }: BreakdownViewProps) {
+export default function BreakdownView({ items, people, settings }: BreakdownViewProps) {
   const boughtItems = items.filter(item => item.status === 'bought');
+  const pendingItems = items.filter(item => item.status === 'pending');
   const totalSpent = boughtItems.reduce((sum, item) => sum + (item.actualPrice || 0), 0);
+  
+  // Calculate estimated remaining cost
+  const estimatedRemaining = pendingItems.reduce((sum, item) => sum + (item.estimatedPrice || 0), 0);
+  
+  // Budget calculations
+  const budget = settings?.budget || 0;
+  const estimatedTotal = totalSpent + estimatedRemaining;
+  const budgetRemaining = budget - totalSpent;
+  const isOverBudget = budget > 0 && totalSpent > budget;
+  const willExceedBudget = budget > 0 && estimatedTotal > budget;
 
   const spendingByPerson: PersonSpending[] = people
     .filter(person => person.isPayer)
@@ -45,6 +57,76 @@ export default function BreakdownView({ items, people }: BreakdownViewProps) {
 
   return (
     <div className="space-y-6">
+      {/* Budget Overview */}
+      {budget > 0 && (
+        <div className={`rounded-xl p-6 border-2 ${
+          isOverBudget 
+            ? 'bg-red-50 border-red-200' 
+            : willExceedBudget 
+              ? 'bg-yellow-50 border-yellow-200'
+              : 'bg-green-50 border-green-200'
+        }`}>
+          <div className="text-center">
+            <h2 className={`text-xl font-bold mb-4 ${
+              isOverBudget ? 'text-red-800' : willExceedBudget ? 'text-yellow-800' : 'text-green-800'
+            }`}>
+              מעקב תקציב
+            </h2>
+            
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="bg-white/60 rounded-lg p-3">
+                <p className="text-sm font-medium text-gray-600">תקציב</p>
+                <p className="text-lg font-bold">{budget.toFixed(2)} ₪</p>
+              </div>
+              <div className="bg-white/60 rounded-lg p-3">
+                <p className="text-sm font-medium text-gray-600">נוצל</p>
+                <p className={`text-lg font-bold ${isOverBudget ? 'text-red-600' : 'text-blue-600'}`}>
+                  {totalSpent.toFixed(2)} ₪
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-white/60 rounded-lg p-4">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium">התקדמות</span>
+                <span className={`text-sm font-bold ${isOverBudget ? 'text-red-600' : 'text-blue-600'}`}>
+                  {((totalSpent / budget) * 100).toFixed(1)}%
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-3">
+                <div 
+                  className={`h-3 rounded-full transition-all duration-300 ${
+                    isOverBudget ? 'bg-red-500' : willExceedBudget ? 'bg-yellow-500' : 'bg-green-500'
+                  }`}
+                  style={{ width: `${Math.min((totalSpent / budget) * 100, 100)}%` }}
+                ></div>
+              </div>
+              {isOverBudget && (
+                <p className="text-red-600 text-sm font-medium mt-2">
+                  חרגת מהתקציב ב-{(totalSpent - budget).toFixed(2)} ₪
+                </p>
+              )}
+              {!isOverBudget && budgetRemaining > 0 && (
+                <p className="text-green-600 text-sm font-medium mt-2">
+                  נותר: {budgetRemaining.toFixed(2)} ₪
+                </p>
+              )}
+            </div>
+
+            {willExceedBudget && !isOverBudget && (
+              <div className="bg-yellow-100 border border-yellow-200 rounded-lg p-3 mt-4">
+                <p className="text-yellow-800 text-sm font-medium">
+                  ⚠️ עשוי לחרוג מהתקציב אם תקנה לפי מחיר מוערך
+                </p>
+                <p className="text-yellow-700 text-sm">
+                  סה״כ משוער: {estimatedTotal.toFixed(2)} ₪
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Total Summary */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <div className="text-center">
@@ -56,6 +138,14 @@ export default function BreakdownView({ items, people }: BreakdownViewProps) {
           <p className="text-sm text-blue-700 mt-1">
             {boughtItems.length} פריטים נקנו
           </p>
+          
+          {estimatedRemaining > 0 && (
+            <div className="bg-blue-100 rounded-lg p-3 mt-4">
+              <p className="text-xs text-blue-700">צפוי עוד</p>
+              <p className="text-lg font-bold text-blue-800">+{estimatedRemaining.toFixed(2)} ₪</p>
+              <p className="text-xs text-blue-600">לפי מחירים משוערים</p>
+            </div>
+          )}
         </div>
       </div>
 

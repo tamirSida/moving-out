@@ -1,13 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { Item } from '@/types';
+import { Item, AppSettings } from '@/types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faPlus, faTag, faShekelSign } from '@fortawesome/free-solid-svg-icons';
 
 interface AddItemFormProps {
   onSubmit: (itemData: Omit<Item, 'id' | 'createdAt' | 'updatedAt'>) => void;
   onClose: () => void;
+  settings?: AppSettings | null;
 }
 
 const categories = [
@@ -22,10 +23,11 @@ const categories = [
   'אחר'
 ];
 
-export default function AddItemForm({ onSubmit, onClose }: AddItemFormProps) {
+export default function AddItemForm({ onSubmit, onClose, settings }: AddItemFormProps) {
+  const availableCategories = settings?.categories || categories;
   const [formData, setFormData] = useState({
     name: '',
-    category: categories[0],
+    category: availableCategories[0],
     estimatedPrice: '',
     status: 'pending' as const,
   });
@@ -44,7 +46,7 @@ export default function AddItemForm({ onSubmit, onClose }: AddItemFormProps) {
 
     setFormData({
       name: '',
-      category: categories[0],
+      category: availableCategories[0],
       estimatedPrice: '',
       status: 'pending',
     });
@@ -93,7 +95,7 @@ export default function AddItemForm({ onSubmit, onClose }: AddItemFormProps) {
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
               >
-                {categories.map((category) => (
+                {availableCategories.map((category) => (
                   <option key={category} value={category}>
                     {category}
                   </option>
@@ -120,6 +122,7 @@ export default function AddItemForm({ onSubmit, onClose }: AddItemFormProps) {
                 </div>
               </div>
             </div>
+
 
             <div className="flex gap-3 pt-6">
               <button

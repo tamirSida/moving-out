@@ -1,25 +1,26 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { collection, onSnapshot, addDoc, updateDoc, doc } from 'firebase/firestore';
+import { collection, onSnapshot, addDoc, updateDoc, doc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Item, Person, PurchaseData } from '@/types';
+import { Item, Person, PurchaseData, AppSettings } from '@/types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faShoppingCart, faCheck, faReceipt, faUser, faList, faChartBar, faCog } from '@fortawesome/free-solid-svg-icons';
 import ItemList from '@/components/ItemList';
 import AddItemForm from '@/components/AddItemForm';
 import PurchaseDialog from '@/components/PurchaseDialog';
 import BreakdownView from '@/components/BreakdownView';
-import PeopleManagement from '@/components/PeopleManagement';
+import SettingsModal from '@/components/SettingsModal';
 
 export default function Home() {
   const [items, setItems] = useState<Item[]>([]);
   const [people, setPeople] = useState<Person[]>([]);
+  const [settings, setSettings] = useState<AppSettings | null>(null);
   const [currentView, setCurrentView] = useState<'active' | 'all' | 'breakdown'>('active');
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
   const [showPurchaseDialog, setShowPurchaseDialog] = useState(false);
-  const [showPeopleManagement, setShowPeopleManagement] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     const unsubscribeItems = onSnapshot(collection(db, 'items'), (snapshot) => {
@@ -40,9 +41,22 @@ export default function Home() {
       setPeople(peopleData);
     });
 
+    const unsubscribeSettings = onSnapshot(collection(db, 'settings'), (snapshot) => {
+      if (snapshot.docs.length > 0) {
+        const settingsData = {
+          id: snapshot.docs[0].id,
+          ...snapshot.docs[0].data(),
+          createdAt: snapshot.docs[0].data().createdAt?.toDate() || new Date(),
+          updatedAt: snapshot.docs[0].data().updatedAt?.toDate() || new Date(),
+        } as AppSettings;
+        setSettings(settingsData);
+      }
+    });
+
     return () => {
       unsubscribeItems();
       unsubscribePeople();
+      unsubscribeSettings();
     };
   }, []);
 
@@ -75,66 +89,82 @@ export default function Home() {
     setSelectedItem(null);
   };
 
+  const handleUpdateSettings = async (newSettings: Partial<AppSettings>) => {
+    if (settings) {
+      await updateDoc(doc(db, 'settings', settings.id), {
+        ...newSettings,
+        updatedAt: new Date(),
+      });
+    } else {
+      await setDoc(doc(db, 'settings', 'app-settings'), {
+        ...newSettings,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    }
+  };
+
   const filteredItems = items.filter(item => {
     if (currentView === 'active') return item.status === 'pending';
     return true;
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm shadow-lg border-b border-blue-100">
-        <div className="max-w-md mx-auto px-6 py-5">
+      <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-20">
+        <div className="max-w-md mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <button
-              onClick={() => setShowPeopleManagement(true)}
-              className="p-3 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200"
+              onClick={() => setShowSettings(true)}
+              className="p-2 text-gray-600 hover:text-blue-600 rounded-lg transition-colors"
+              aria-label="הגדרות"
             >
               <FontAwesomeIcon icon={faCog} className="w-5 h-5" />
             </button>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <h1 className="text-lg font-bold text-gray-900">
               רשימת קניות למעבר דירה
             </h1>
-            <div className="w-11"></div>
+            <div className="w-9"></div>
           </div>
         </div>
       </header>
 
       {/* Navigation */}
-      <nav className="bg-white/90 backdrop-blur-sm border-b border-gray-100 sticky top-0 z-10">
-        <div className="max-w-md mx-auto px-6 py-2">
-          <div className="flex space-x-reverse space-x-2 bg-gray-100 rounded-xl p-1">
+      <nav className="bg-white border-b border-gray-200">
+        <div className="max-w-md mx-auto px-4">
+          <div className="flex bg-gray-100 rounded-lg p-1 m-2">
             <button
               onClick={() => setCurrentView('active')}
-              className={`flex-1 py-3 px-4 text-sm font-semibold text-center rounded-lg transition-all duration-200 ${
+              className={`flex-1 py-2 px-3 text-sm font-medium text-center rounded-md transition-colors ${
                 currentView === 'active'
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 hover:text-blue-600'
               }`}
             >
-              <FontAwesomeIcon icon={faShoppingCart} className="ml-2" />
+              <FontAwesomeIcon icon={faShoppingCart} className="ml-1" />
               פעילים
             </button>
             <button
               onClick={() => setCurrentView('all')}
-              className={`flex-1 py-3 px-4 text-sm font-semibold text-center rounded-lg transition-all duration-200 ${
+              className={`flex-1 py-2 px-3 text-sm font-medium text-center rounded-md transition-colors ${
                 currentView === 'all'
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 hover:text-blue-600'
               }`}
             >
-              <FontAwesomeIcon icon={faList} className="ml-2" />
+              <FontAwesomeIcon icon={faList} className="ml-1" />
               הכל
             </button>
             <button
               onClick={() => setCurrentView('breakdown')}
-              className={`flex-1 py-3 px-4 text-sm font-semibold text-center rounded-lg transition-all duration-200 ${
+              className={`flex-1 py-2 px-3 text-sm font-medium text-center rounded-md transition-colors ${
                 currentView === 'breakdown'
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-gray-600 hover:text-blue-600'
               }`}
             >
-              <FontAwesomeIcon icon={faChartBar} className="ml-2" />
+              <FontAwesomeIcon icon={faChartBar} className="ml-1" />
               פירוט
             </button>
           </div>
@@ -142,7 +172,7 @@ export default function Home() {
       </nav>
 
       {/* Main Content */}
-      <main className="max-w-md mx-auto px-6 py-6">
+      <main className="max-w-md mx-auto px-4 py-4">
         {currentView !== 'breakdown' && (
           <>
             <ItemList
@@ -157,15 +187,16 @@ export default function Home() {
             {/* Add Item Button */}
             <button
               onClick={() => setShowAddForm(true)}
-              className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-full p-4 shadow-2xl hover:shadow-blue-300/50 transition-all duration-300 hover:scale-110 z-20"
+              className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-4 shadow-lg transition-colors z-20"
+              aria-label="הוסף פריט חדש"
             >
-              <FontAwesomeIcon icon={faPlus} className="w-6 h-6" />
+              <FontAwesomeIcon icon={faPlus} className="w-5 h-5" />
             </button>
           </>
         )}
 
         {currentView === 'breakdown' && (
-          <BreakdownView items={items} people={people} />
+          <BreakdownView items={items} people={people} settings={settings} />
         )}
       </main>
 
@@ -174,6 +205,7 @@ export default function Home() {
         <AddItemForm
           onSubmit={handleAddItem}
           onClose={() => setShowAddForm(false)}
+          settings={settings}
         />
       )}
 
@@ -189,10 +221,12 @@ export default function Home() {
         />
       )}
 
-      {showPeopleManagement && (
-        <PeopleManagement
+      {showSettings && (
+        <SettingsModal
           people={people}
-          onClose={() => setShowPeopleManagement(false)}
+          settings={settings}
+          onClose={() => setShowSettings(false)}
+          onUpdateSettings={handleUpdateSettings}
         />
       )}
     </div>
