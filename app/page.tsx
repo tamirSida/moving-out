@@ -14,6 +14,7 @@ import BreakdownView from '@/components/BreakdownView';
 import SettingsModal from '@/components/SettingsModal';
 import LoadingWrapper from '@/components/LoadingWrapper';
 import BudgetTracker from '@/components/BudgetTracker';
+import PageLoader from '@/components/PageLoader';
 
 export default function Home() {
   const [items, setItems] = useState<Item[]>([]);
@@ -135,8 +136,9 @@ export default function Home() {
   });
 
   return (
-    <LoadingWrapper>
-      <div className="min-h-screen bg-gray-50">
+    <PageLoader>
+      <LoadingWrapper>
+        <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-20">
         <div className="max-w-md mx-auto px-4 py-4">
@@ -272,7 +274,8 @@ export default function Home() {
           onUpdateSettings={handleUpdateSettings}
         />
       )}
-    </div>
-    </LoadingWrapper>
+      </div>
+      </LoadingWrapper>
+    </PageLoader>
   );
 }
