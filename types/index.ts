@@ -20,5 +20,5 @@ export interface Person {
 export interface PurchaseData {
   boughtBy: string;
   actualPrice: number;
-  receiptFile?: File;
+  receiptUrl?: string;
 }

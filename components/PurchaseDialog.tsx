@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Item, Person, PurchaseData } from '@/types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes, faCheck, faUser, faShekelSign, faReceipt } from '@fortawesome/free-solid-svg-icons';
+import { faTimes, faCheck, faUser, faShekelSign, faReceipt, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 interface PurchaseDialogProps {
   item: Item;
@@ -18,6 +18,8 @@ export default function PurchaseDialog({ item, people, onSubmit, onClose }: Purc
     actualPrice: item.estimatedPrice?.toString() || '',
     receiptFile: null as File | null,
   });
+  const [uploadingReceipt, setUploadingReceipt] = useState(false);
+  const [uploadedReceiptUrl, setUploadedReceiptUrl] = useState<string | null>(null);
 
   const payers = people.filter(person => person.isPayer);
 
@@ -29,13 +31,46 @@ export default function PurchaseDialog({ item, people, onSubmit, onClose }: Purc
     onSubmit({
       boughtBy: formData.boughtBy,
       actualPrice: Number(formData.actualPrice),
-      receiptFile: formData.receiptFile || undefined,
+      receiptUrl: uploadedReceiptUrl || undefined,
     });
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     setFormData({ ...formData, receiptFile: file });
+
+    if (file) {
+      await uploadReceiptToCloudinary(file);
+    } else {
+      setUploadedReceiptUrl(null);
+    }
+  };
+
+  const uploadReceiptToCloudinary = async (file: File) => {
+    setUploadingReceipt(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload-receipt', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to upload receipt');
+      }
+
+      const result = await response.json();
+      setUploadedReceiptUrl(result.file.url);
+    } catch (error) {
+      console.error('Receipt upload error:', error);
+      alert('שגיאה בהעלאת הקבלה. אנא נסה שוב.');
+      setFormData({ ...formData, receiptFile: null });
+    } finally {
+      setUploadingReceipt(false);
+    }
   };
 
   return (
@@ -56,7 +91,7 @@ export default function PurchaseDialog({ item, people, onSubmit, onClose }: Purc
           <p className="text-sm text-gray-600">קטגוריה: {item.category}</p>
           {item.estimatedPrice && (
             <p className="text-sm text-gray-600">
-              מחיר משוער: ₪{item.estimatedPrice}
+              מחיר משוער: {item.estimatedPrice} ₪
             </p>
           )}
         </div>
@@ -113,11 +148,33 @@ export default function PurchaseDialog({ item, people, onSubmit, onClose }: Purc
               type="file"
               onChange={handleFileChange}
               accept="image/*,.pdf"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent file:ml-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              disabled={uploadingReceipt}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent file:ml-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed"
             />
-            {formData.receiptFile && (
-              <p className="text-sm text-green-600 mt-1">
-                נבחר קובץ: {formData.receiptFile.name}
+            
+            {uploadingReceipt && (
+              <div className="flex items-center gap-2 text-sm text-blue-600 mt-2">
+                <FontAwesomeIcon icon={faSpinner} className="w-4 h-4 animate-spin" />
+                <span>מעלה קבלה...</span>
+              </div>
+            )}
+            
+            {uploadedReceiptUrl && !uploadingReceipt && (
+              <div className="mt-2">
+                <p className="text-sm text-green-600 mb-2">
+                  ✓ קבלה הועלתה בהצלחה
+                </p>
+                <img 
+                  src={uploadedReceiptUrl} 
+                  alt="Receipt preview" 
+                  className="max-w-full h-32 object-cover rounded-lg border"
+                />
+              </div>
+            )}
+            
+            {formData.receiptFile && !uploadedReceiptUrl && !uploadingReceipt && (
+              <p className="text-sm text-orange-600 mt-1">
+                נבחר קובץ: {formData.receiptFile.name} (לא הועלה עדיין)
               </p>
             )}
           </div>

@@ -58,12 +58,18 @@ export default function Home() {
   const handlePurchase = async (purchaseData: PurchaseData) => {
     if (!selectedItem) return;
 
-    await updateDoc(doc(db, 'items', selectedItem.id), {
+    const updateData: any = {
       status: 'bought',
       boughtBy: purchaseData.boughtBy,
       actualPrice: purchaseData.actualPrice,
       updatedAt: new Date(),
-    });
+    };
+
+    if (purchaseData.receiptUrl) {
+      updateData.receiptUrl = purchaseData.receiptUrl;
+    }
+
+    await updateDoc(doc(db, 'items', selectedItem.id), updateData);
 
     setShowPurchaseDialog(false);
     setSelectedItem(null);
@@ -75,57 +81,57 @@ export default function Home() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-md mx-auto px-4 py-4">
+      <header className="bg-white/80 backdrop-blur-sm shadow-lg border-b border-blue-100">
+        <div className="max-w-md mx-auto px-6 py-5">
           <div className="flex items-center justify-between">
             <button
               onClick={() => setShowPeopleManagement(true)}
-              className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
+              className="p-3 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200"
             >
               <FontAwesomeIcon icon={faCog} className="w-5 h-5" />
             </button>
-            <h1 className="text-xl font-bold text-gray-900">
+            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               רשימת קניות למעבר דירה
             </h1>
-            <div className="w-9"></div>
+            <div className="w-11"></div>
           </div>
         </div>
       </header>
 
       {/* Navigation */}
-      <nav className="bg-white border-b">
-        <div className="max-w-md mx-auto px-4">
-          <div className="flex space-x-reverse space-x-1">
+      <nav className="bg-white/90 backdrop-blur-sm border-b border-gray-100 sticky top-0 z-10">
+        <div className="max-w-md mx-auto px-6 py-2">
+          <div className="flex space-x-reverse space-x-2 bg-gray-100 rounded-xl p-1">
             <button
               onClick={() => setCurrentView('active')}
-              className={`flex-1 py-3 px-4 text-sm font-medium text-center border-b-2 ${
+              className={`flex-1 py-3 px-4 text-sm font-semibold text-center rounded-lg transition-all duration-200 ${
                 currentView === 'active'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
               }`}
             >
               <FontAwesomeIcon icon={faShoppingCart} className="ml-2" />
-              פריטים פעילים
+              פעילים
             </button>
             <button
               onClick={() => setCurrentView('all')}
-              className={`flex-1 py-3 px-4 text-sm font-medium text-center border-b-2 ${
+              className={`flex-1 py-3 px-4 text-sm font-semibold text-center rounded-lg transition-all duration-200 ${
                 currentView === 'all'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
               }`}
             >
               <FontAwesomeIcon icon={faList} className="ml-2" />
-              כל הפריטים
+              הכל
             </button>
             <button
               onClick={() => setCurrentView('breakdown')}
-              className={`flex-1 py-3 px-4 text-sm font-medium text-center border-b-2 ${
+              className={`flex-1 py-3 px-4 text-sm font-semibold text-center rounded-lg transition-all duration-200 ${
                 currentView === 'breakdown'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
               }`}
             >
               <FontAwesomeIcon icon={faChartBar} className="ml-2" />
@@ -136,7 +142,7 @@ export default function Home() {
       </nav>
 
       {/* Main Content */}
-      <main className="max-w-md mx-auto px-4 py-6">
+      <main className="max-w-md mx-auto px-6 py-6">
         {currentView !== 'breakdown' && (
           <>
             <ItemList
@@ -151,7 +157,7 @@ export default function Home() {
             {/* Add Item Button */}
             <button
               onClick={() => setShowAddForm(true)}
-              className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-4 shadow-lg transition-colors"
+              className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-full p-4 shadow-2xl hover:shadow-blue-300/50 transition-all duration-300 hover:scale-110 z-20"
             >
               <FontAwesomeIcon icon={faPlus} className="w-6 h-6" />
             </button>

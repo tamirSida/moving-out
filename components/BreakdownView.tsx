@@ -52,7 +52,7 @@ export default function BreakdownView({ items, people }: BreakdownViewProps) {
             <FontAwesomeIcon icon={faShekelSign} className="w-5 h-5 text-blue-600" />
             <h2 className="text-lg font-bold text-blue-900">סה״כ הוצאות</h2>
           </div>
-          <p className="text-2xl font-bold text-blue-600">₪{totalSpent.toFixed(2)}</p>
+          <p className="text-2xl font-bold text-blue-600">{totalSpent.toFixed(2)} ₪</p>
           <p className="text-sm text-blue-700 mt-1">
             {boughtItems.length} פריטים נקנו
           </p>
@@ -75,7 +75,7 @@ export default function BreakdownView({ items, people }: BreakdownViewProps) {
                   <h4 className="font-medium text-gray-900">{person.name}</h4>
                 </div>
                 <div className="text-left">
-                  <p className="font-bold text-lg text-gray-900">₪{personTotal.toFixed(2)}</p>
+                  <p className="font-bold text-lg text-gray-900">{personTotal.toFixed(2)} ₪</p>
                   <p className="text-sm text-gray-500">{itemsBought} פריטים</p>
                 </div>
               </div>
@@ -87,7 +87,7 @@ export default function BreakdownView({ items, people }: BreakdownViewProps) {
                     {personItems.map(item => (
                       <div key={item.id} className="flex justify-between items-center text-sm">
                         <span className="text-gray-600">{item.name}</span>
-                        <span className="font-medium text-gray-900">₪{item.actualPrice?.toFixed(2)}</span>
+                        <span className="font-medium text-gray-900">{item.actualPrice?.toFixed(2)} ₪</span>
                       </div>
                     ))}
                   </div>
@@ -124,7 +124,7 @@ export default function BreakdownView({ items, people }: BreakdownViewProps) {
                 <div className="flex justify-between items-center mb-2">
                   <h4 className="font-medium text-gray-900">{category}</h4>
                   <div className="text-left">
-                    <p className="font-bold text-gray-900">₪{total.toFixed(2)}</p>
+                    <p className="font-bold text-gray-900">{total.toFixed(2)} ₪</p>
                     <p className="text-sm text-gray-500">{count} פריטים</p>
                   </div>
                 </div>
