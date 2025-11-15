@@ -1,65 +1,194 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useEffect } from 'react';
+import { collection, onSnapshot, addDoc, updateDoc, doc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { Item, Person, PurchaseData } from '@/types';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPlus, faShoppingCart, faCheck, faReceipt, faUser, faList, faChartBar, faCog } from '@fortawesome/free-solid-svg-icons';
+import ItemList from '@/components/ItemList';
+import AddItemForm from '@/components/AddItemForm';
+import PurchaseDialog from '@/components/PurchaseDialog';
+import BreakdownView from '@/components/BreakdownView';
+import PeopleManagement from '@/components/PeopleManagement';
 
 export default function Home() {
+  const [items, setItems] = useState<Item[]>([]);
+  const [people, setPeople] = useState<Person[]>([]);
+  const [currentView, setCurrentView] = useState<'active' | 'all' | 'breakdown'>('active');
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+  const [showPurchaseDialog, setShowPurchaseDialog] = useState(false);
+  const [showPeopleManagement, setShowPeopleManagement] = useState(false);
+
+  useEffect(() => {
+    const unsubscribeItems = onSnapshot(collection(db, 'items'), (snapshot) => {
+      const itemsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate() || new Date(),
+        updatedAt: doc.data().updatedAt?.toDate() || new Date(),
+      })) as Item[];
+      setItems(itemsData);
+    });
+
+    const unsubscribePeople = onSnapshot(collection(db, 'people'), (snapshot) => {
+      const peopleData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Person[];
+      setPeople(peopleData);
+    });
+
+    return () => {
+      unsubscribeItems();
+      unsubscribePeople();
+    };
+  }, []);
+
+  const handleAddItem = async (itemData: Omit<Item, 'id' | 'createdAt' | 'updatedAt'>) => {
+    await addDoc(collection(db, 'items'), {
+      ...itemData,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    setShowAddForm(false);
+  };
+
+  const handlePurchase = async (purchaseData: PurchaseData) => {
+    if (!selectedItem) return;
+
+    await updateDoc(doc(db, 'items', selectedItem.id), {
+      status: 'bought',
+      boughtBy: purchaseData.boughtBy,
+      actualPrice: purchaseData.actualPrice,
+      updatedAt: new Date(),
+    });
+
+    setShowPurchaseDialog(false);
+    setSelectedItem(null);
+  };
+
+  const filteredItems = items.filter(item => {
+    if (currentView === 'active') return item.status === 'pending';
+    return true;
+  });
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-md mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => setShowPeopleManagement(true)}
+              className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+              <FontAwesomeIcon icon={faCog} className="w-5 h-5" />
+            </button>
+            <h1 className="text-xl font-bold text-gray-900">
+              רשימת קניות למעבר דירה
+            </h1>
+            <div className="w-9"></div>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+      </header>
+
+      {/* Navigation */}
+      <nav className="bg-white border-b">
+        <div className="max-w-md mx-auto px-4">
+          <div className="flex space-x-reverse space-x-1">
+            <button
+              onClick={() => setCurrentView('active')}
+              className={`flex-1 py-3 px-4 text-sm font-medium text-center border-b-2 ${
+                currentView === 'active'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <FontAwesomeIcon icon={faShoppingCart} className="ml-2" />
+              פריטים פעילים
+            </button>
+            <button
+              onClick={() => setCurrentView('all')}
+              className={`flex-1 py-3 px-4 text-sm font-medium text-center border-b-2 ${
+                currentView === 'all'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <FontAwesomeIcon icon={faList} className="ml-2" />
+              כל הפריטים
+            </button>
+            <button
+              onClick={() => setCurrentView('breakdown')}
+              className={`flex-1 py-3 px-4 text-sm font-medium text-center border-b-2 ${
+                currentView === 'breakdown'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <FontAwesomeIcon icon={faChartBar} className="ml-2" />
+              פירוט
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <main className="max-w-md mx-auto px-4 py-6">
+        {currentView !== 'breakdown' && (
+          <>
+            <ItemList
+              items={filteredItems}
+              people={people}
+              onPurchase={(item) => {
+                setSelectedItem(item);
+                setShowPurchaseDialog(true);
+              }}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+
+            {/* Add Item Button */}
+            <button
+              onClick={() => setShowAddForm(true)}
+              className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-4 shadow-lg transition-colors"
+            >
+              <FontAwesomeIcon icon={faPlus} className="w-6 h-6" />
+            </button>
+          </>
+        )}
+
+        {currentView === 'breakdown' && (
+          <BreakdownView items={items} people={people} />
+        )}
       </main>
+
+      {/* Modals */}
+      {showAddForm && (
+        <AddItemForm
+          onSubmit={handleAddItem}
+          onClose={() => setShowAddForm(false)}
+        />
+      )}
+
+      {showPurchaseDialog && selectedItem && (
+        <PurchaseDialog
+          item={selectedItem}
+          people={people}
+          onSubmit={handlePurchase}
+          onClose={() => {
+            setShowPurchaseDialog(false);
+            setSelectedItem(null);
+          }}
+        />
+      )}
+
+      {showPeopleManagement && (
+        <PeopleManagement
+          people={people}
+          onClose={() => setShowPeopleManagement(false)}
+        />
+      )}
     </div>
   );
 }
