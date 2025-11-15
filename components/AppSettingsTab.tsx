@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { AppSettings } from '@/types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faTimes, faTag, faShekelSign, faEdit, faTrash, faCheck, faBudget } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faTimes, faTag, faShekelSign, faEdit, faTrash, faCheck, faWallet } from '@fortawesome/free-solid-svg-icons';
 
 interface AppSettingsTabProps {
   settings: AppSettings | null;
